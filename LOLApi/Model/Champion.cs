@@ -16,5 +16,14 @@ namespace LOLApi.Model
         public int? PositionId { get; set; }
         [ForeignKey("PositionId")]
         public virtual ChampionPosition? championPosition { get; set; }
+        [ForeignKey("RegionId")]
+        public virtual ChampionRegion? championRegion { get; set; }
+        [ForeignKey("ClassId")]
+        public virtual ChampionClass? championClass { get; set; }
+        [ForeignKey("RangeId")]
+        public virtual RangeType? rangeType { get; set; }
+        [ForeignKey("AdaptiveId")]
+        public virtual AdaptiveType? adaptiveType { get; set; }
+        public virtual ICollection<ChampionAbilities> championAbilities { get; set; }
     }
 }
