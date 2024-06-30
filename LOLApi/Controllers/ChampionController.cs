@@ -162,6 +162,28 @@ namespace LOLApi.Controllers
             }
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetChampionsBasedOnFilter([FromQuery] ChampionFilterViewModel vm)
+        {
+            try
+            {
+                if (vm == null)
+                {
+                    return BadRequest();
+                }
+                var response = await _championRepo.GetChampionByFilter(vm);
+                if (response.Count() == 0)
+                {
+                    return NoContent();
+                }
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500);
+            }
+        }
+
         [HttpGet("/fulldetails/{id}")]
         public async Task<IActionResult> GetOneChampionFullDetails([FromRoute] int id)
         {

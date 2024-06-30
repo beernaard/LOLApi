@@ -1,5 +1,6 @@
 ﻿using LOLApi.DTO;
 using LOLApi.Model;
+using LOLApi.ViewModel;
 
 namespace LOLApi.Interface
 {
@@ -15,5 +16,6 @@ namespace LOLApi.Interface
 
         Task<IEnumerable<CompleteDetailOfChampion>> GetChampionByName(string name);
         Task<IEnumerable<CompleteDetailOfChampion>> GetChampionByPosition(int id);
+        Task<IEnumerable<CompleteDetailOfChampion>> GetChampionByFilter(ChampionFilterViewModel vm);
     }
 }

@@ -2,6 +2,7 @@
 using LOLApi.DTO;
 using LOLApi.Interface;
 using LOLApi.Model;
+using LOLApi.ViewModel;
 using Microsoft.EntityFrameworkCore;
 
 namespace LOLApi.Repository
@@ -60,6 +61,59 @@ namespace LOLApi.Repository
                     championTitle = a.championTitle,
                 });
             return await response.FirstOrDefaultAsync();
+        }
+
+        public async Task<IEnumerable<CompleteDetailOfChampion>> GetChampionByFilter(ChampionFilterViewModel vm)
+        {
+            var query = _context.Champions.AsQueryable();
+
+            if (!string.IsNullOrEmpty(vm.ChampionName))
+            {
+                query = query.Where(x => x.ChampionName.Contains(vm.ChampionName));
+            }
+            if (!string.IsNullOrEmpty(vm.championTitle))
+            {
+                query = query.Where(x => x.championTitle.Contains(vm.championTitle));
+            }
+            if (vm.PositionId.HasValue)
+            {
+                query = query.Where(x => x.PositionId == vm.PositionId);
+            }
+            if (vm.RegionId.HasValue)
+            {
+                query = query.Where(x => x.RegionId == vm.RegionId);
+            }
+            if (vm.AdaptiveId.HasValue)
+            {
+                query = query.Where(x => x.AdaptiveId == vm.AdaptiveId);
+            }
+            if (vm.ClassId.HasValue)
+            {
+                query = query.Where(x => x.ClassId == vm.ClassId);
+            }
+            if (vm.RangeId.HasValue)
+            {
+                query = query.Where(x => x.RangeId == vm.RangeId);
+            }
+            var result = query
+                .Include(z => z.championPosition)
+                .Include(c => c.adaptiveType)
+                .Include(c => c.championClass)
+                .Include(c => c.championRegion)
+                .Include(c => c.rangeType)
+                .Select(a=> new CompleteDetailOfChampion
+            {
+                ChampionName = a.ChampionName,
+                championTitle = a.championTitle,
+                championImage = a.championImage,
+                championDescription = a.championDescription,
+                PositionName = a.championPosition.PositionName,
+                RegionName = a.championRegion.RegionName,
+                AdaptiveName = a.adaptiveType.AdaptiveName,
+                ClassName = a.championClass.ClassName,
+                RangeName = a.rangeType.NameType,
+            });
+            return await result.ToListAsync();
         }
 
         public async Task<IEnumerable<CompleteDetailOfChampion>> GetChampionByName(string name)
