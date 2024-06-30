@@ -1,4 +1,5 @@
 ﻿using LOLApi.Interface;
+using LOLApi.Mapper;
 using LOLApi.Model;
 using LOLApi.ViewModel;
 using Microsoft.AspNetCore.Mvc;
@@ -192,14 +193,7 @@ namespace LOLApi.Controllers
                 {
                     return BadRequest();
                 }
-                var mappedResponse = new Champion()
-                {
-                    ChampionName = viewModel.ChampionName,
-                    championTitle = viewModel.championTitle,
-                    championImage = viewModel.championImage,
-                    championDescription = viewModel.championDescription,
-                    PositionId = viewModel.PositionId,
-                };
+                var mappedResponse = ChampionMapper.ChampionVmToClass(viewModel);
                 await _championRepo.AddData(mappedResponse);
                 await _championRepo.Save();
                 return Ok();
