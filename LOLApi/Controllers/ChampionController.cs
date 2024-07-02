@@ -1,8 +1,10 @@
-﻿using LOLApi.Interface;
+﻿using LOLApi.DTO;
+using LOLApi.Interface;
 using LOLApi.Mapper;
 using LOLApi.Model;
 using LOLApi.ViewModel;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.IdentityModel.Tokens;
 
 namespace LOLApi.Controllers
@@ -11,13 +13,19 @@ namespace LOLApi.Controllers
     [ApiController]
     public class ChampionController : ControllerBase
     {
+        private const string championCacheKey = "cacheKey";
+
         private readonly IChampion _championRepo;
         private readonly IChampionService _championService;
+        private readonly ILogger<ChampionController> _logger;
+        private readonly IMemoryCache _cache;
 
-        public ChampionController(IChampion championRepo,IChampionService championService)
+        public ChampionController(IChampion championRepo,IChampionService championService, ILogger<ChampionController> logger, IMemoryCache cache)
         {
             _championRepo = championRepo;
             _championService = championService;
+            _logger = logger;
+            _cache = cache;
         }
 
         [HttpGet]
@@ -67,15 +75,28 @@ namespace LOLApi.Controllers
         {
             try
             {
-                var response = await _championRepo.GetBasicInfoOfAllChampion();
-                if (response.Count() == 0)
+                if(!_cache.TryGetValue(championCacheKey, out IEnumerable<BasicChampionInfo>? championResponse))
                 {
-                    return NoContent();
+                    _logger.LogInformation("Champion data not found in cache");
+                    championResponse = await _championRepo.GetBasicInfoOfAllChampion();
+                    if (championResponse.Count() == 0)
+                    {
+                        return NoContent();
+                    }
+                    var cacheEntryOption = new MemoryCacheEntryOptions()
+                        .SetSlidingExpiration(TimeSpan.FromSeconds(60))
+                        .SetAbsoluteExpiration(TimeSpan.FromHours(1))
+                        .SetPriority(CacheItemPriority.Normal)
+                        .SetSize(1);
+                    _cache.Set(championCacheKey, championResponse, cacheEntryOption);
+                    return Ok(championResponse);
                 }
-                return Ok(response);
+                _logger.LogInformation("Champion Data found in cache");
+                return Ok(championResponse);
             }
             catch (Exception ex)
             {
+                _logger.LogError($"Error message: {ex}");
                 return StatusCode(500);
             }
 
@@ -105,15 +126,28 @@ namespace LOLApi.Controllers
         {
             try
             {
-                var response = await _championRepo.GetAllCompleteDetails();
-                if (response.Count() == 0)
+                if(!_cache.TryGetValue(championCacheKey, out IEnumerable<CompleteDetailOfChampion>? championResponse))
                 {
-                    return NoContent();
+                    _logger.LogInformation("Champion data not found in cache");
+                    championResponse = await _championRepo.GetAllCompleteDetails();
+                    if (championResponse.Count() == 0)
+                    {
+                        return NoContent();
+                    }
+                    var cacheEntryOption = new MemoryCacheEntryOptions()
+                       .SetSlidingExpiration(TimeSpan.FromSeconds(60))
+                       .SetAbsoluteExpiration(TimeSpan.FromHours(1))
+                       .SetPriority(CacheItemPriority.Normal)
+                       .SetSize(1);
+                    _cache.Set(championCacheKey, championResponse, cacheEntryOption);
+                    return Ok(championResponse);
                 }
-                return Ok(response);
+                _logger.LogInformation("Champion Data found in cache");
+                return Ok(championResponse);
             }
             catch (Exception ex)
             {
+                _logger.LogError($"Error message: {ex}");
                 return StatusCode(500);
             }
         }
@@ -163,15 +197,15 @@ namespace LOLApi.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetChampionsBasedOnFilter([FromQuery] ChampionFilterViewModel vm)
+        public async Task<IActionResult> GetChampionsBasedOnFilter([FromQuery] ChampionFilterViewModel vm, int pageNumber, int pageSize)
         {
             try
             {
-                if (vm == null)
+                if (vm == null || pageNumber == 0 || pageSize == 0)
                 {
                     return BadRequest();
                 }
-                var response = await _championRepo.GetChampionByFilter(vm);
+                var response = await _championRepo.GetChampionByFilter(vm, pageNumber, pageSize);
                 if (response.Count() == 0)
                 {
                     return NoContent();

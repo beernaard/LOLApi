@@ -16,6 +16,6 @@ namespace LOLApi.Interface
 
         Task<IEnumerable<CompleteDetailOfChampion>> GetChampionByName(string name);
         Task<IEnumerable<CompleteDetailOfChampion>> GetChampionByPosition(int id);
-        Task<IEnumerable<CompleteDetailOfChampion>> GetChampionByFilter(ChampionFilterViewModel vm);
+        Task<IEnumerable<CompleteDetailOfChampion>> GetChampionByFilter(ChampionFilterViewModel vm, int pageNumber, int pageSize);
     }
 }

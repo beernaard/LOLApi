@@ -3,17 +3,21 @@ using LOLApi.DTO;
 using LOLApi.Interface;
 using LOLApi.Model;
 using LOLApi.ViewModel;
+using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.EntityFrameworkCore;
 
 namespace LOLApi.Repository
 {
-    public class ChampionRepository:GeneralRepository<Champion>, IChampion
+    public class ChampionRepository : GeneralRepository<Champion>, IChampion
     {
+        
         private readonly ApplicationDbContext _context;
 
-        public ChampionRepository(ApplicationDbContext context):base(context)
+
+        public ChampionRepository(ApplicationDbContext context) : base(context)
         {
             _context = context;
+
         }
 
         public async Task<IEnumerable<CompleteDetailOfChampion>> GetAllCompleteDetails()
@@ -33,7 +37,7 @@ namespace LOLApi.Repository
                     championDescription = a.championDescription,
                     PositionName = a.championPosition.PositionName,
                     RegionName = a.championRegion.RegionName,
-                    AdaptiveName  =a.adaptiveType.AdaptiveName,
+                    AdaptiveName = a.adaptiveType.AdaptiveName,
                     ClassName = a.championClass.ClassName,
                     RangeName = a.rangeType.NameType,
                 });
@@ -63,7 +67,7 @@ namespace LOLApi.Repository
             return await response.FirstOrDefaultAsync();
         }
 
-        public async Task<IEnumerable<CompleteDetailOfChampion>> GetChampionByFilter(ChampionFilterViewModel vm)
+        public async Task<IEnumerable<CompleteDetailOfChampion>> GetChampionByFilter(ChampionFilterViewModel vm, int pageNumber, int pageSize)
         {
             var query = _context.Champions.AsQueryable();
 
@@ -101,31 +105,34 @@ namespace LOLApi.Repository
                 .Include(c => c.championClass)
                 .Include(c => c.championRegion)
                 .Include(c => c.rangeType)
-                .Select(a=> new CompleteDetailOfChampion
-            {
-                ChampionName = a.ChampionName,
-                championTitle = a.championTitle,
-                championImage = a.championImage,
-                championDescription = a.championDescription,
-                PositionName = a.championPosition.PositionName,
-                RegionName = a.championRegion.RegionName,
-                AdaptiveName = a.adaptiveType.AdaptiveName,
-                ClassName = a.championClass.ClassName,
-                RangeName = a.rangeType.NameType,
-            });
-            return await result.ToListAsync();
+                .Select(a => new CompleteDetailOfChampion
+                {
+                    ChampionName = a.ChampionName,
+                    championTitle = a.championTitle,
+                    championImage = a.championImage,
+                    championDescription = a.championDescription,
+                    PositionName = a.championPosition.PositionName,
+                    RegionName = a.championRegion.RegionName,
+                    AdaptiveName = a.adaptiveType.AdaptiveName,
+                    ClassName = a.championClass.ClassName,
+                    RangeName = a.rangeType.NameType,
+                });
+            var paginated = result
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize);
+            return await paginated.ToListAsync();
         }
 
         public async Task<IEnumerable<CompleteDetailOfChampion>> GetChampionByName(string name)
         {
             var response = _context.Champions
                 .Where(x => x.ChampionName.Contains(name))
-                .Include(z=>z.championPosition)
+                .Include(z => z.championPosition)
                 .Include(c => c.adaptiveType)
                 .Include(c => c.championClass)
                 .Include(c => c.championRegion)
                 .Include(c => c.rangeType)
-                .Select(a=>new CompleteDetailOfChampion
+                .Select(a => new CompleteDetailOfChampion
                 {
                     ChampionName = a.ChampionName,
                     championTitle = a.championTitle,
@@ -142,7 +149,7 @@ namespace LOLApi.Repository
 
         public async Task<IEnumerable<CompleteDetailOfChampion>> GetChampionByPosition(int id)
         {
-            var response =  _context.Champions
+            var response = _context.Champions
                 .AsNoTracking()
                 .Include(a => a.championPosition)
                 .Include(c => c.adaptiveType)
